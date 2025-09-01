@@ -9,9 +9,9 @@
 #include <QTimer>                // for deferred init
 #include "KimpanelAdaptor.h"
 
-static const char* SERVICE1 = "org.kde.impanel";
-static const char* SERVICE2 = "org.kde.impanel2";
+static const char* SERVICE = "org.kde.impanel";
 static const char* PATH = "/org/kde/impanel";
+static const char* IFACE1 = "org.kde.impanel";
 static const char* IFACE2 = "org.kde.impanel2";
 
 int main(int argc, char *argv[]) {
@@ -24,17 +24,12 @@ int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
 
     auto bus = QDBusConnection::sessionBus();
-    qDebug() << "[DBUS] Attempting to register services...";
-    if (!bus.registerService(SERVICE1)) {
-        qDebug() << "[DBUS] Failed to register" << SERVICE1 << "(probably already owned)";
-        // try stealing isn't allowed, just continue; owning SERVICE2 might be enough
+    qDebug() << "[DBUS] Attempting to register service...";
+    if (!bus.registerService(SERVICE)) {
+        qDebug() << "[DBUS] Failed to register" << SERVICE << "(probably already owned)";
+        // Continue gracefully if service name is already taken
     } else {
-        qDebug() << "[DBUS] Successfully registered" << SERVICE1;
-    }
-    if (bus.registerService(SERVICE2)) {
-        qDebug() << "[DBUS] Successfully registered" << SERVICE2;
-    } else {
-        qDebug() << "[DBUS] Failed to register" << SERVICE2;
+        qDebug() << "[DBUS] Successfully registered" << SERVICE;
     }
 
     // Register our adaptor receiver at PATH.
@@ -47,9 +42,12 @@ int main(int argc, char *argv[]) {
     }
     qDebug() << "[DBUS] Object registered successfully";
 
-    // Inform Fcitx that a panel exists (many clients emit PanelCreated2)
-    qDebug() << "[DBUS] Sending PanelCreated2 signal to announce panel availability";
-    bus.send(QDBusMessage::createSignal(PATH, IFACE2, "PanelCreated2"));
+    // // Inform Fcitx5 that a panel exists by emitting both required signals
+    // qDebug() << "[DBUS] Sending PanelCreated signal on org.kde.impanel interface";
+    // bus.send(QDBusMessage::createSignal(PATH, IFACE1, "PanelCreated"));
+    
+    // qDebug() << "[DBUS] Sending PanelCreated2 signal on org.kde.impanel2 interface";
+    // bus.send(QDBusMessage::createSignal(PATH, IFACE2, "PanelCreated2"));
 
     // QML UI
     QQmlApplicationEngine eng;

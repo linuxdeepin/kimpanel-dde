@@ -1,0 +1,109 @@
+## DBus Interface Overview
+
+The `org.kde.kimpanel.inputmethod` interface is the signal-only interface that input method engines use to send updates to kimpanel implementations. Your C++/Qt implementation needs to subscribe to these signals.
+
+## Required Signals to Handle
+
+### Text Composition Signals
+- **`UpdatePreeditText`** - Updates composition text
+- **`UpdatePreeditCaret`** - Updates caret position in composition
+- **`ShowPreedit`** - Controls composition text visibility  
+
+### Candidate Selection Signals  
+- **`UpdateLookupTable`** - Updates candidate list with labels and text
+- **`UpdateLookupTableCursor`** - Updates selected candidate index
+- **`ShowLookupTable`** - Controls candidate list visibility
+
+### Auxiliary Text Signals
+- **`UpdateAux`** - Updates auxiliary text content
+- **`ShowAux`** - Controls auxiliary text visibility
+
+### Input Method Control Signals
+- **`RegisterProperties`** - Registers input method properties/menu items 
+- **`UpdateProperty`** - Updates individual property states
+- **`Enable`** - Enables/disables input method
+
+### Positioning Signals
+- **`UpdateSpotLocation`** - Updates cursor position for panel positioning
+- **`ExecMenu`** - Triggers menu execution
+
+## DBus Interfaces to Export
+
+Your kimpanel implementation must export these three interfaces :
+
+### 1. org.kde.impanel (Legacy Protocol)
+```xml
+<interface name="org.kde.impanel">
+  <signal name="SelectCandidate"><arg type="i" name="index" /></signal>
+  <signal name="TriggerProperty"><arg type="s" name="key" /></signal>
+  <signal name="PanelCreated"></signal>
+  <!-- Additional signals for input method control -->
+</interface>
+``` [17](#0-16) 
+
+### 2. org.kde.impanel2 (Enhanced Protocol)  
+```xml
+<interface name="org.kde.impanel2">
+  <signal name="PanelCreated2"></signal>
+  <method name="SetSpotRect">
+    <arg type="i" name="x" direction="in" />
+    <arg type="i" name="y" direction="in" />
+    <arg type="i" name="w" direction="in" />
+    <arg type="i" name="h" direction="in" />
+  </method>
+  <method name="SetLookupTable">
+    <arg direction="in" type="as" name="label"/>
+    <arg direction="in" type="as" name="text"/>
+    <!-- Additional lookup table parameters -->
+  </method>
+</interface>
+``` [18](#0-17) 
+
+### 3. org.fcitx.GnomeHelper (Fcitx Integration)
+```xml
+<interface name="org.fcitx.GnomeHelper">
+  <method name="LockXkbGroup">
+    <arg direction="in" type="i" name="idx"/>
+  </method>
+</interface>
+``` [19](#0-18) 
+
+## Service Discovery Protocol
+
+1. **Own bus names**: `org.kde.impanel` and `org.fcitx.GnomeHelper` 
+2. **Export interfaces** at paths `/org/kde/impanel` and `/org/fcitx/GnomeHelper`
+3. **Emit ready signals**: `PanelCreated` and `PanelCreated2` when ready
+4. **Subscribe to signals** from `org.kde.kimpanel.inputmethod` interface
+
+## State Management
+
+Your implementation needs to track these state variables that get updated by the signals:
+- Text states: `preedit`, `aux`, `pos`, `cursor`  
+- Visibility flags: `showPreedit`, `showLookupTable`, `showAux`, `enabled`
+- Candidate data: `table[]`, `label[]`
+- Position data: `x`, `y`, `w`, `h`, `relative`, `scale`
+
+
+To inform Fcitx5 that a Kimpanel is running, Kimpanel needs to register specific DBus interfaces and emit `PanelCreated` signals. 
+
+## DBus Interface Registration
+
+The kimpanel extension registers two DBus interfaces to communicate with input method engines like Fcitx5:
+
+1. **`org.kde.impanel`** - Main kimpanel interface for input method communication
+2. **`org.kde.impanel2`** - Extended interface with additional positioning methods  
+
+## DBus Name Ownership
+
+The extension claims ownership of a DBus service name:
+
+- **`org.kde.impanel`** - Primary service name that input methods look for
+
+## Signal Emission
+
+Once the DBus names are successfully owned, emit two critical signals:
+
+- **`PanelCreated`** signal on the `org.kde.impanel` interface
+- **`PanelCreated2`** signal on the `org.kde.impanel2` interface
+
+These signals inform Fcitx5 and other input method engines that a kimpanel implementation is now available and ready to receive input method events.
