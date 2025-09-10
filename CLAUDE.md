@@ -82,4 +82,3 @@ rm -rf build
 - `src/KimpanelAdaptor.h/.cpp` - DBus protocol implementation  
 - `qml/Main.qml` - Modern panel UI with candidate display
 - `CMakeLists.txt` - Qt 6 build configuration with QML module
-- `.cursor/rules/` - Detailed development guidelines and protocol specs
