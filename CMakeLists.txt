@@ -19,6 +19,8 @@ qt_add_executable(kimpanel-lite
   src/main.cpp
   src/KimpanelAdaptor.cpp
   src/KimpanelAdaptor.h
+  src/KimpanelInputmethodWatcher.cpp
+  src/KimpanelInputmethodWatcher.h
 )
 target_link_libraries(kimpanel-lite PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::DBus LayerShellQt::Interface)
 

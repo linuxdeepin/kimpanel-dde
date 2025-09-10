@@ -8,6 +8,7 @@
 #include <LayerShellQt/Shell>    // for initialization
 #include <QTimer>                // for deferred init
 #include "KimpanelAdaptor.h"
+#include "KimpanelInputmethodWatcher.h"
 
 static const char* SERVICE = "org.kde.impanel";
 static const char* PATH = "/org/kde/impanel";
@@ -41,6 +42,9 @@ int main(int argc, char *argv[]) {
         qFatal("Failed to register object");
     }
     qDebug() << "[DBUS] Object registered successfully";
+
+    // Subscribe to org.kde.kimpanel.inputmethod signals (optional, env-toggle)
+    KimpanelInputmethodWatcher inputWatcher(&adaptor);
 
     // // Inform Fcitx5 that a panel exists by emitting both required signals
     // qDebug() << "[DBUS] Sending PanelCreated signal on org.kde.impanel interface";
@@ -102,6 +106,5 @@ int main(int argc, char *argv[]) {
 
     return app.exec();
 }
-
 
 

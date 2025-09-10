@@ -27,6 +27,12 @@ class KimpanelAdaptor : public QObject {
     Q_PROPERTY(int spotW READ spotW NOTIFY spotChanged)
     Q_PROPERTY(int spotH READ spotH NOTIFY spotChanged)
 
+    // org.kde.kimpanel.inputmethod exposed state
+    Q_PROPERTY(QString auxText READ auxText NOTIFY auxChanged)
+    Q_PROPERTY(bool auxVisible READ auxVisible NOTIFY auxChanged)
+    Q_PROPERTY(bool lookupVisible READ lookupVisible NOTIFY lookupVisibleChanged)
+    Q_PROPERTY(bool enabled READ enabled NOTIFY enabledChanged)
+
 public:
     explicit KimpanelAdaptor(QObject *parent=nullptr);
 
@@ -43,6 +49,12 @@ public:
     int spotW() const { return spot_.w; }
     int spotH() const { return spot_.h; }
 
+    // inputmethod state getters
+    QString auxText() const { return auxText_; }
+    bool auxVisible() const { return auxVisible_; }
+    bool lookupVisible() const { return lookupVisible_; }
+    bool enabled() const { return enabled_; }
+
 public slots:
     // org.kde.impanel2
     void SetSpotRect(int x, int y, int w, int h);
@@ -52,11 +64,25 @@ public slots:
                         bool hasPrev, bool hasNext,
                         int cursor, int layout);
 
+    // setters for org.kde.kimpanel.inputmethod updates
+    void setAuxText(const QString &text) { if (auxText_ == text) return; auxText_ = text; emit auxChanged(); }
+    void setAuxVisible(bool v) { if (auxVisible_ == v) return; auxVisible_ = v; emit auxChanged(); }
+    void setLookupVisible(bool v) { if (lookupVisible_ == v) return; lookupVisible_ = v; emit lookupVisibleChanged(); }
+    void setEnabled(bool v) { if (enabled_ == v) return; enabled_ = v; emit enabledChanged(); }
+
 signals:
     void lookupChanged();
     void spotChanged();
+    void auxChanged();
+    void lookupVisibleChanged();
+    void enabledChanged();
 
 private:
     LookupData data_;
     struct { int x=0,y=0,w=0,h=0; } spot_;
+    // inputmethod state
+    QString auxText_;
+    bool auxVisible_ = false;
+    bool lookupVisible_ = false;
+    bool enabled_ = false;
 };

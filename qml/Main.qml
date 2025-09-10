@@ -16,7 +16,7 @@ Window {
   property int cellH: 42
   property int panelPadding: 8
   width: cellW + (panelPadding * 2)
-  height: (listModel.count > 0 ? Math.min(7, listModel.count) : 1) * cellH + (panelPadding * 2)
+  height: (listModel.count > 0 ? Math.min(7, listModel.count) : 1) * cellH + (panelPadding * 2) + (PanelAdaptor.auxVisible ? 24 : 0)
 
   // Color scheme for excellent contrast and modern appearance
   readonly property color backgroundColor: "#ffffff"
@@ -53,6 +53,7 @@ Window {
 
       // Main panel container with modern styling
   Rectangle {
+    visible: (PanelAdaptor.lookupVisible || PanelAdaptor.auxVisible)
     anchors.fill: parent
     radius: 12
     color: main.backgroundColor
@@ -69,10 +70,33 @@ Window {
       horizontalOffset: 0
     }
 
+    // Auxiliary text area (from inputmethod UpdateAux)
+    Label {
+      id: auxLabel
+      visible: PanelAdaptor.auxVisible
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.top: parent.top
+      anchors.leftMargin: main.panelPadding
+      anchors.rightMargin: main.panelPadding
+      anchors.topMargin: main.panelPadding
+      text: PanelAdaptor.auxText
+      color: main.secondaryTextColor
+      font.pixelSize: 12
+      elide: Text.ElideRight
+      opacity: 0.9
+    }
+
     ListView {
       id: listView
-      anchors.fill: parent
-      anchors.margins: main.panelPadding
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: parent.bottom
+      anchors.top: auxLabel.visible ? auxLabel.bottom : parent.top
+      anchors.leftMargin: main.panelPadding
+      anchors.rightMargin: main.panelPadding
+      anchors.bottomMargin: main.panelPadding
+      anchors.topMargin: auxLabel.visible ? 6 : main.panelPadding
       model: listModel
       spacing: 2
       
@@ -161,6 +185,5 @@ Window {
     }
   }
 }
-
 
 
