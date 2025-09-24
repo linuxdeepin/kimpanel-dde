@@ -12,8 +12,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DDEBUG")
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick DBus)
-find_package(LayerShellQt REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets DBus)
+find_package(Dtk6 REQUIRED COMPONENTS Widget Gui Core)
 
 qt_add_executable(kimpanel-lite
   src/main.cpp
@@ -21,13 +21,15 @@ qt_add_executable(kimpanel-lite
   src/KimpanelAdaptor.h
   src/KimpanelInputmethodWatcher.cpp
   src/KimpanelInputmethodWatcher.h
+  src/PanelWindow.cpp
+  src/PanelWindow.h
 )
-target_link_libraries(kimpanel-lite PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::DBus LayerShellQt::Interface)
-
-qt_add_qml_module(kimpanel-lite
-  URI KimpanelLite
-  VERSION 1.0
-  QML_FILES
-    qml/Main.qml
-)
+target_link_libraries(kimpanel-lite PRIVATE
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Widgets
+    Qt6::DBus
+    Dtk6::Widget
+    Dtk6::Gui
+    Dtk6::Core)
 install(TARGETS kimpanel-lite)

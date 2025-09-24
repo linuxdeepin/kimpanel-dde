@@ -1,5 +1,13 @@
 #include "KimpanelAdaptor.h"
+#include <QDBusConnection>
+#include <QDBusMessage>
 #include <QDebug>
+
+namespace {
+constexpr const char *INPUT_METHOD_SERVICE = "org.kde.kimpanel.inputmethod";
+constexpr const char *INPUT_METHOD_PATH = "/org/kde/kimpanel/inputmethod";
+constexpr const char *INPUT_METHOD_INTERFACE = "org.kde.kimpanel.inputmethod";
+}
 
 KimpanelAdaptor::KimpanelAdaptor(QObject *parent) : QObject(parent) {}
 
@@ -24,4 +32,28 @@ void KimpanelAdaptor::SetLookupTable(const QStringList &labels,
     data_.cursor = cursor;
     data_.layout = layout;
     emit lookupChanged();
+}
+
+void KimpanelAdaptor::requestLookupPageUp() {
+    if (!QDBusConnection::sessionBus().isConnected()) {
+        qWarning() << "[DBUS][panel] No session bus available for LookupTablePageUp";
+        return;
+    }
+    auto msg = QDBusMessage::createMethodCall(INPUT_METHOD_SERVICE,
+                                              INPUT_METHOD_PATH,
+                                              INPUT_METHOD_INTERFACE,
+                                              QStringLiteral("LookupTablePageUp"));
+    QDBusConnection::sessionBus().asyncCall(msg);
+}
+
+void KimpanelAdaptor::requestLookupPageDown() {
+    if (!QDBusConnection::sessionBus().isConnected()) {
+        qWarning() << "[DBUS][panel] No session bus available for LookupTablePageDown";
+        return;
+    }
+    auto msg = QDBusMessage::createMethodCall(INPUT_METHOD_SERVICE,
+                                              INPUT_METHOD_PATH,
+                                              INPUT_METHOD_INTERFACE,
+                                              QStringLiteral("LookupTablePageDown"));
+    QDBusConnection::sessionBus().asyncCall(msg);
 }

@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This repository implements a **Kimpanel-compatible input method panel** for **Fcitx5** on **Wayland (Hyprland)** using **Qt 6**. It provides a modern, clean candidate selection interface that follows the Fcitx5 Kimpanel DBus protocol.
+This repository implements a **Kimpanel-compatible input method panel** for **Fcitx5** on **Deepin/DDE (X11)** using **Qt 6** with the **DTK widget stack**. It exposes the `org.kde.impanel2` DBus surface and renders a frameless DTK window that tracks caret position and candidate state.
 
 **Key Components:**
-- **main.cpp**: Application entry point with DBus setup and LayerShell window management
-- **KimpanelAdaptor**: DBus protocol handler that manages lookup tables and caret positioning
-- **Main.qml**: Modern QML UI with dynamic sizing and smooth animations
+- **main.cpp**: Application entry point with DBus setup and DTK application bootstrap
+- **KimpanelAdaptor**: DBus protocol handler that manages lookup tables, caret positioning, and navigation helpers
+- **PanelWindow**: DTK widget hierarchy that renders auxiliary text, candidate chips, and navigation buttons
 
 ## Build Commands
 
@@ -32,53 +32,53 @@ rm -rf build
 # From build directory
 ./kimpanel-lite
 
-# From project root  
+# From project root
 ./build/kimpanel-lite
 ```
 
 ## Architecture
 
-**Data Flow:** Input Method → (DBus) → KimpanelAdaptor → (Qt Signals) → QML UI
+**Data Flow:** Input Method → (DBus) → KimpanelAdaptor → (Qt Signals) → PanelWindow (DTK widgets)
 
 **DBus Integration:**
 - Registers services: `org.kde.impanel` and `org.kde.impanel2`
-- Object path: `/org/kde/impanel` 
+- Object path: `/org/kde/impanel`
 - Implements `SetLookupTable()` and `SetSpotRect()` protocol methods
-- Emits `PanelCreated2` signal on startup
+- Emits navigation requests back to the input method via `LookupTablePageUp/Down`
 
-**Wayland Layer-Shell:**
-- Uses LayerShellQt for proper Wayland surface handling
-- Positions panel via margin-based coordinate system
-- Anchored to TOP+LEFT, LayerTop level, no exclusive zone
+**DTK Windowing:**
+- Uses `DApplication` + `DWidget` for a frameless, translucent panel window
+- Positions panel directly with `QWidget::move()` when caret rectangles update
+- Candidate list rendered as horizontal chips with DTK palette-aware styling
 
 ## Development Standards
 
 **C++ Style:**
-- C++20 with Qt 6 conventions
-- No raw `new` - use RAII patterns
-- Validate all DBus input indices and handle gracefully
-- Log DBus calls with interface, member, and signature info
+- C++20 with Qt Widgets conventions
+- Prefer RAII ownership for Qt objects where practical
+- Validate all DBus payloads and guard against empty lookup data
+- Keep logging concise but informative for DBus traffic and positioning actions
 
-**QML Guidelines:**  
-- Keep delegates lightweight
-- Prefer Models/Signals over heavy JavaScript bindings
-- Use `pragma ComponentBehavior: Bound` for type safety
+**Widget Guidelines:**
+- Reuse DTK components (`DLabel`, `DPushButton`, `DFrame`) to benefit from theme integration
+- Avoid custom painting unless DTK styling cannot cover the requirement
+- Keep per-candidate widgets lightweight to minimize redraw overhead
 
 **Protocol Compliance:**
 - Never crash on unexpected payloads
 - Continue gracefully if `org.kde.impanel` service name is taken
-- Truncate overly long lists in logs for safety
+- Confirm navigation requests only fire when input method advertises prev/next pages
 
 ## Dependencies
 
-- Qt 6 (Core, Gui, DBus, Qml, Quick)
-- LayerShellQt library  
-- Running Wayland session (preferably Hyprland)
-- Session DBus availability
+- Qt 6 (Core, Gui, Widgets, DBus)
+- Dtk6 (Core, Gui, Widget)
+- X11 session (Deepin Desktop Environment) with session DBus
 
 ## Key Files
 
-- `src/main.cpp` - Application setup, DBus registration, positioning logic
-- `src/KimpanelAdaptor.h/.cpp` - DBus protocol implementation  
-- `qml/Main.qml` - Modern panel UI with candidate display
-- `CMakeLists.txt` - Qt 6 build configuration with QML module
+- `src/main.cpp` – Application setup, DBus registration, DTK bootstrap
+- `src/KimpanelAdaptor.h/.cpp` – DBus protocol implementation and navigation hooks
+- `src/PanelWindow.h/.cpp` – DTK widget tree for panel rendering
+- `CMakeLists.txt` – Qt Widgets + DTK build configuration
+- `dtk.md` – DTK dependency notes and manual X11 test checklist

@@ -55,6 +55,9 @@ public:
     bool lookupVisible() const { return lookupVisible_; }
     bool enabled() const { return enabled_; }
 
+    void requestLookupPageUp();
+    void requestLookupPageDown();
+
 public slots:
     // org.kde.impanel2
     void SetSpotRect(int x, int y, int w, int h);
