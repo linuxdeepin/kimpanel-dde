@@ -16,7 +16,6 @@ static const char* IFACE1 = "org.kde.impanel";
 static const char* IFACE2 = "org.kde.impanel2";
 
 int main(int argc, char *argv[]) {
-    DApplication::loadDXcbPlugin();
     DApplication app(argc, argv);
     app.setQuitOnLastWindowClosed(false);
     app.setApplicationDisplayName(QStringLiteral("kimpanel-lite"));

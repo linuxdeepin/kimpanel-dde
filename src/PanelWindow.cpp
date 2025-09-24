@@ -285,12 +285,12 @@ void PanelWindow::updateCandidates() {
     ensureChipCount(count);
 
     for (int i = 0; i < candidateChips_.size(); ++i) {
-        auto *chip = candidateChips_.at(i);
-        if (i < count) {
+        auto *chip = qobject_cast<CandidateChip*>(candidateChips_.at(i));
+        if (chip && i < count) {
             chip->setCandidate(labels.value(i), texts.value(i), comments.value(i));
             chip->setSelected(i == adaptor_->cursor());
             chip->show();
-        } else {
+        } else if (chip) {
             chip->hide();
         }
     }

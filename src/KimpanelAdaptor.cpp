@@ -1,6 +1,7 @@
 #include "KimpanelAdaptor.h"
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusPendingCall>
 #include <QDebug>
 
 namespace {

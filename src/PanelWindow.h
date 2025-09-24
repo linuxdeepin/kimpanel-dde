@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DWidget>
+#include <DPushButton>
 
 #include <QVector>
 
@@ -10,15 +11,12 @@ namespace Dtk {
 namespace Widget {
 class DLabel;
 class DFrame;
-class DPushButton;
 }
 }
 
 class QHBoxLayout;
 class QVBoxLayout;
-
-// Forward declaration for the candidate widget container
-class CandidateChip;
+class QWidget;
 
 class PanelWindow : public Dtk::Widget::DWidget {
     Q_OBJECT
@@ -51,5 +49,5 @@ private:
     Dtk::Widget::DPushButton *prevButton_ = nullptr;
     Dtk::Widget::DPushButton *nextButton_ = nullptr;
 
-    QVector<CandidateChip*> candidateChips_;
+    QVector<QWidget*> candidateChips_;
 };
