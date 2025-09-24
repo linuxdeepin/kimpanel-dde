@@ -41,27 +41,80 @@
 - Keep changes minimal and scoped; do not alter unrelated files or add licenses.
 - Prefer adding options behind safe defaults; don’t regress Wayland behavior or DBus contracts.
 
-## Next Steps Plan: Add org.kde.kimpanel.inputmethod Signals
-- Confirm signal scope and signatures
-  - Verify exact signatures for `UpdateAux(ss)`, `ShowAux(b)`, `ShowLookupTable(b)`, `Enable(b)` using `fcitx5_side_implementation/` and `kde_example/`. Defer uncertain details for manual check.
+## Implementation Status: org.kde.kimpanel.inputmethod Signals ✅ COMPLETED
 
-- Add DBus listener class (inputmethod)
-  - Create `src/KimpanelInputmethodWatcher.{h,cpp}` subscribing via `QDBusConnection::connect` to `org.kde.kimpanel.inputmethod` signals. No changes to existing `org.kde.impanel2` handling.
+The `org.kde.kimpanel.inputmethod` D-Bus interface support has been successfully implemented:
 
-- Store aux/lookup visibility + text
-  - Extend state holder (expose via `KimpanelAdaptor` or a new context object) with: `auxText` (QString), `auxVisible` (bool), `lookupVisible` (bool). Ignore text attributes initially.
+### Completed Components
+- **KimpanelInputmethodWatcher** (`src/KimpanelInputmethodWatcher.{h,cpp}`)
+  - Subscribes to `UpdateAux(QString,QString)`, `ShowAux(bool)`, `ShowLookupTable(bool)`, `Enable(bool)` signals
+  - Environment toggle: `KIMPANEL_DISABLE_INPUTMETHOD` to disable subscription for debugging
+  - Updates KimpanelAdaptor state via setter methods
 
-- Track Enable state and expose to QML
-  - Maintain `enabled` bool from `Enable(b)` and expose as `Q_PROPERTY` for QML indicator/behavior.
+- **Extended KimpanelAdaptor** (`src/KimpanelAdaptor.{h,cpp}`)
+  - Added Q_PROPERTY: `auxText`, `auxVisible`, `lookupVisible`, `enabled` 
+  - Setter methods with change detection to avoid unnecessary signal emissions
+  - New signals: `auxChanged`, `lookupVisibleChanged`, `enabledChanged`
 
-- Wire updates into existing UI
-  - In QML, bind visibility to `auxVisible`/`lookupVisible`; display `auxText`. Do not change positioning or existing `impanel2` lookup-table flow.
+- **QML Integration** (`qml/Main.qml`)
+  - Panel visibility: `(PanelAdaptor.lookupVisible || PanelAdaptor.auxVisible)`
+  - Auxiliary text display when `auxVisible` is true
+  - Dynamic height calculation including aux text area
 
-- Gate via runtime detection/flag
-  - Subscribe only when the service appears (optional `QDBusServiceWatcher`). Optionally add a runtime switch (env/CLI) to disable inputmethod path for debugging.
+- **Build System** (`CMakeLists.txt`)
+  - Added `KimpanelInputmethodWatcher.{cpp,h}` to sources
 
-- Update CMake and docs
-  - Add new sources to `CMakeLists.txt`. Document added properties/signals usage in `dbus.md` briefly.
+- **Documentation** (`dbus.md`)
+  - Updated with inputmethod signal descriptions and QML property mappings
 
-- Manual test with Fcitx5/qdbus
-  - Run Wayland: `QT_QPA_PLATFORM=wayland ./build/kimpanel-lite`. Validate with Fcitx5 and `qdbus`/`busctl` by emitting `UpdateAux`, `ShowAux`, `ShowLookupTable`, `Enable` and observe UI/state. Ensure no regressions to `impanel2` (spot/lookup).
+### Current Capabilities
+- Receives and displays auxiliary text from input methods (e.g., Fcitx5 pronunciation hints)
+- Controls lookup table and auxiliary text visibility independently
+- Tracks input method enabled state (available as QML property)
+- Maintains backward compatibility with existing `org.kde.impanel2` functionality
+- Environment-based toggle for debugging/testing
+
+### Testing
+- Manual testing with Fcitx5: `QT_QPA_PLATFORM=wayland ./build/kimpanel-lite`
+- Use `qdbus` or `busctl` to emit test signals to verify behavior
+- No regressions to existing `impanel2` spot positioning or lookup table functionality
+
+## Future Enhancement Ideas
+
+### Text Attributes Support
+- Parse and apply text attributes from `UpdateAux` signal's second parameter
+- Support for text formatting (bold, italic, colors) in auxiliary text display
+
+### Service Detection
+- Add `QDBusServiceWatcher` to detect when `org.kde.kimpanel.inputmethod` service appears/disappears
+- Dynamic subscription management based on service availability
+
+### Input Method Properties
+- Implement `RegisterProperties` and `UpdateProperty` signal handling
+- Add property-based configuration UI (language switching, input mode toggles)
+
+### Performance Optimizations  
+- Batch multiple signal updates to reduce QML redraws
+- Implement smart visibility management to avoid unnecessary panel shows/hides
+
+### Enhanced Positioning
+- Support for multiple monitor setups with proper panel positioning
+- Adaptive positioning when panel would appear off-screen
+
+## Next Steps: DTK/X11 Panel Port
+
+1. Audit DTK building blocks for an X11 panel window (dtkwidget/dtkgui) and capture required components for Deepin styling.
+2. Extract the existing panel logic into DTK-ready classes and remove Wayland/LayerShell dependencies so the application boots natively on DDE/X11.
+3. Prototype a DTK-based panel surface (DApplication + frameless DWidget) that renders the existing state and fixes the DDE/X11 glitches.
+4. Rework candidate rendering for the DTK panel so candidates lay out in a horizontal row with proper spacing, highlighting, and navigation hooks.
+5. Delete the old Wayland/QML panel path from the build, wiring all entry points and resources to the new DTK6 implementation.
+6. Update build docs with DTK dependencies and draft manual test steps on DDE/X11 (panel rendering, candidate row behavior, DBus updates).
+
+(Tray icon integration will be revisited after the DTK/X11 panel foundation is stable.)
+
+### DTK/X11 Panel Stack Decision
+- Target DTK6 with DtkCore + DtkGui + DtkWidget; they ship together and give Deepin-native theming, window helpers, and widget primitives.
+- Build the panel as a `DApplication` + frameless `DWidget`; use DTK layouts (`QHBoxLayout`/`DLabel` etc.) to render candidates horizontally and apply palette-aware styling.
+- Keep existing DBus/state logic toolkit-agnostic and drive the widget view via signal/slot updates.
+- Only pull in DtkDeclarative later if we intentionally reintroduce a QML surface; the initial X11 port stays purely widget-based.
+- Remove the legacy Wayland/QML stack and rely solely on the DTK6/DDE/X11 implementation moving forward.

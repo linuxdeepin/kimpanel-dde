@@ -17,7 +17,7 @@ static const char* IFACE2 = "org.kde.impanel2";
 
 int main(int argc, char *argv[]) {
     // Wayland-friendly defaults
-    qputenv("QT_QPA_PLATFORM", "wayland"); // Hyprland
+    // qputenv("QT_QPA_PLATFORM", "wayland"); // Hyprland
     
     // Initialize LayerShellQt before creating QGuiApplication
     LayerShellQt::Shell::useLayerShell();
