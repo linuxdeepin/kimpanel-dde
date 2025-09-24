@@ -43,7 +43,10 @@ private:
 
     KimpanelAdaptor *adaptor_ = nullptr;
 
+    Dtk::Widget::DFrame *panelFrame_ = nullptr;
+    Dtk::Widget::DFrame *auxChip_ = nullptr;
     Dtk::Widget::DLabel *auxLabel_ = nullptr;
+    QWidget *rowWrapper_ = nullptr;
     QWidget *candidateRowHost_ = nullptr;
     QHBoxLayout *candidateRowLayout_ = nullptr;
     Dtk::Widget::DPushButton *prevButton_ = nullptr;

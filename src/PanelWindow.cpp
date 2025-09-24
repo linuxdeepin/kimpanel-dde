@@ -9,12 +9,23 @@
 #include <DPalette>
 
 #include <QColor>
+#include <QDebug>
 #include <QFont>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QPalette>
+#include <QPoint>
+#include <QPointF>
+#include <QRect>
+#include <QRectF>
+#include <QSizeF>
+#include <QScreen>
 #include <QSizePolicy>
 #include <QStyle>
 #include <QVBoxLayout>
+#include <algorithm>
+#include <cmath>
+#include <limits>
 
 DWIDGET_USE_NAMESPACE
 
@@ -29,14 +40,15 @@ public:
         setFrameShape(QFrame::NoFrame);
         setAttribute(Qt::WA_StyledBackground, true);
 
-        auto *layout = new QVBoxLayout(this);
-        layout->setContentsMargins(12, 8, 12, 8);
-        layout->setSpacing(4);
+        auto *layout = new QHBoxLayout(this);
+        layout->setContentsMargins(10, 6, 10, 6);
+        layout->setSpacing(6);
 
         label_ = new DLabel(this);
         label_->setObjectName("candidateLabel");
         label_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         label_->setVisible(false);
+        label_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
         layout->addWidget(label_);
 
         text_ = new DLabel(this);
@@ -45,12 +57,14 @@ public:
         textFont.setWeight(QFont::DemiBold);
         text_->setFont(textFont);
         text_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        text_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
         layout->addWidget(text_);
 
         comment_ = new DLabel(this);
         comment_->setObjectName("candidateComment");
         comment_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         comment_->setVisible(false);
+        comment_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
         layout->addWidget(comment_);
 
         refreshPalette();
@@ -128,67 +142,91 @@ PanelWindow::PanelWindow(KimpanelAdaptor *adaptor, QWidget *parent)
 void PanelWindow::setupUi() {
     auto *outerLayout = new QVBoxLayout(this);
     outerLayout->setContentsMargins(0, 0, 0, 0);
+    outerLayout->setSpacing(6);
 
-    auto *frame = new DFrame(this);
-    frame->setObjectName("panelFrame");
-    frame->setFrameShape(QFrame::NoFrame);
-    frame->setAutoFillBackground(true);
-    frame->setAttribute(Qt::WA_StyledBackground, true);
-    outerLayout->addWidget(frame);
+    auxChip_ = new DFrame(this);
+    auxChip_->setObjectName("auxChip");
+    auxChip_->setFrameShape(QFrame::NoFrame);
+    auxChip_->setAutoFillBackground(true);
+    auxChip_->setAttribute(Qt::WA_StyledBackground, true);
+    auxChip_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
 
-    auto *frameLayout = new QVBoxLayout(frame);
-    frameLayout->setContentsMargins(16, 12, 16, 12);
-    frameLayout->setSpacing(10);
+    auto *auxLayout = new QHBoxLayout(auxChip_);
+    auxLayout->setContentsMargins(8, 4, 8, 4);
+    auxLayout->setSpacing(4);
 
-    auxLabel_ = new DLabel(frame);
+    auxLabel_ = new DLabel(auxChip_);
     auxLabel_->setObjectName("auxLabel");
-    auxLabel_->setWordWrap(true);
-    auxLabel_->setVisible(false);
-    frameLayout->addWidget(auxLabel_);
+    auxLabel_->setAlignment(Qt::AlignCenter);
+    auxLabel_->setWordWrap(false);
+    auxLabel_->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    auxLayout->addWidget(auxLabel_);
 
-    auto *rowWrapper = new QWidget(frame);
-    auto *rowLayout = new QHBoxLayout(rowWrapper);
+    auxChip_->setVisible(false);
+    outerLayout->addWidget(auxChip_, 0, Qt::AlignLeft);
+
+    panelFrame_ = new DFrame(this);
+    panelFrame_->setObjectName("panelFrame");
+    panelFrame_->setFrameShape(QFrame::NoFrame);
+    panelFrame_->setAutoFillBackground(true);
+    panelFrame_->setAttribute(Qt::WA_StyledBackground, true);
+    outerLayout->addWidget(panelFrame_, 0, Qt::AlignLeft);
+
+    auto *frameLayout = new QVBoxLayout(panelFrame_);
+    frameLayout->setContentsMargins(12, 8, 12, 10);
+    frameLayout->setSpacing(8);
+
+    rowWrapper_ = new QWidget(panelFrame_);
+    auto *rowLayout = new QHBoxLayout(rowWrapper_);
     rowLayout->setContentsMargins(0, 0, 0, 0);
-    rowLayout->setSpacing(10);
+    rowLayout->setSpacing(8);
 
-    prevButton_ = new DPushButton(rowWrapper);
+    prevButton_ = new DPushButton(rowWrapper_);
     prevButton_->setObjectName("navPrev");
     prevButton_->setFlat(true);
     prevButton_->setText(QStringLiteral("◀"));
-    prevButton_->setFixedSize(QSize(32, 32));
+    prevButton_->setFixedSize(QSize(28, 28));
     prevButton_->setFocusPolicy(Qt::NoFocus);
 
-    candidateRowHost_ = new QWidget(rowWrapper);
+    candidateRowHost_ = new QWidget(rowWrapper_);
     candidateRowHost_->setObjectName("candidateRow");
     candidateRowHost_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
 
     candidateRowLayout_ = new QHBoxLayout(candidateRowHost_);
     candidateRowLayout_->setContentsMargins(0, 0, 0, 0);
-    candidateRowLayout_->setSpacing(12);
+    candidateRowLayout_->setSpacing(8);
 
-    nextButton_ = new DPushButton(rowWrapper);
+    nextButton_ = new DPushButton(rowWrapper_);
     nextButton_->setObjectName("navNext");
     nextButton_->setFlat(true);
     nextButton_->setText(QStringLiteral("▶"));
-    nextButton_->setFixedSize(QSize(32, 32));
+    nextButton_->setFixedSize(QSize(28, 28));
     nextButton_->setFocusPolicy(Qt::NoFocus);
 
     rowLayout->addWidget(prevButton_);
     rowLayout->addWidget(candidateRowHost_, 1);
     rowLayout->addWidget(nextButton_);
 
-    frameLayout->addWidget(rowWrapper);
+    frameLayout->addWidget(rowWrapper_);
+
+    panelFrame_->setVisible(false);
 
     setStyleSheet(QStringLiteral(R"( 
 #panelFrame {
-    border-radius: 12px;
+    border-radius: 10px;
     border: 1px solid palette(midlight);
     background: palette(window);
 }
 
+#auxChip {
+    border-radius: 8px;
+    border: 1px solid palette(midlight);
+    background: palette(alternateBase);
+}
+
 #auxLabel {
     color: palette(text);
-    font-size: 12pt;
+    font-weight: 500;
 }
 
 #navPrev, #navNext {
@@ -203,7 +241,7 @@ void PanelWindow::setupUi() {
 
 CandidateChip {
     border: 1px solid palette(midlight);
-    border-radius: 10px;
+    border-radius: 8px;
     background: palette(button);
 }
 
@@ -213,6 +251,14 @@ CandidateChip[selected="true"] {
 }
 
 CandidateChip[selected="true"] QLabel {
+    color: palette(highlightedText);
+}
+
+#candidateComment {
+    color: palette(mid);
+}
+
+CandidateChip[selected="true"] #candidateComment {
     color: palette(highlightedText);
 }
 )"));
@@ -261,6 +307,7 @@ void PanelWindow::handleAuxChanged() {
 }
 
 void PanelWindow::handleLookupVisibleChanged() {
+    updateCandidates();
     updateVisibility();
 }
 
@@ -274,6 +321,21 @@ void PanelWindow::handleSpotChanged() {
 
 void PanelWindow::updateCandidates() {
     if (!adaptor_) {
+        if (panelFrame_) {
+            panelFrame_->setVisible(false);
+        }
+        if (rowWrapper_) {
+            rowWrapper_->setVisible(false);
+        }
+        if (candidateRowHost_) {
+            candidateRowHost_->setVisible(false);
+        }
+        if (prevButton_) {
+            prevButton_->setVisible(false);
+        }
+        if (nextButton_) {
+            nextButton_->setVisible(false);
+        }
         return;
     }
 
@@ -295,17 +357,45 @@ void PanelWindow::updateCandidates() {
         }
     }
 
-    candidateRowHost_->setVisible(count > 0);
+    const bool hasCandidates = count > 0;
+    const bool shouldShowLookup = hasCandidates && adaptor_->lookupVisible();
+
+    if (panelFrame_) {
+        panelFrame_->setVisible(shouldShowLookup);
+    }
+    if (rowWrapper_) {
+        rowWrapper_->setVisible(shouldShowLookup);
+    }
+    if (candidateRowHost_) {
+        candidateRowHost_->setVisible(shouldShowLookup);
+    }
+    if (prevButton_) {
+        prevButton_->setVisible(shouldShowLookup);
+    }
+    if (nextButton_) {
+        nextButton_->setVisible(shouldShowLookup);
+    }
+
     adjustSize();
 }
 
 void PanelWindow::updateAuxText() {
     if (!adaptor_) {
-        auxLabel_->setVisible(false);
+        if (auxChip_) {
+            auxChip_->setVisible(false);
+        }
         return;
     }
-    auxLabel_->setText(adaptor_->auxText());
-    auxLabel_->setVisible(adaptor_->auxVisible() && !adaptor_->auxText().isEmpty());
+    const QString auxText = adaptor_->auxText().trimmed();
+    const bool shouldShow = adaptor_->auxVisible() && !auxText.isEmpty();
+
+    auxLabel_->setText(auxText);
+    if (auxChip_) {
+        auxChip_->setVisible(shouldShow);
+        if (shouldShow) {
+            auxChip_->adjustSize();
+        }
+    }
 }
 
 void PanelWindow::updateVisibility() {
@@ -314,7 +404,9 @@ void PanelWindow::updateVisibility() {
         return;
     }
 
-    const bool shouldShow = adaptor_->enabled() && (adaptor_->lookupVisible() || adaptor_->auxVisible());
+    const bool lookupHasContent = adaptor_->lookupVisible() && !adaptor_->texts().isEmpty();
+    const bool auxHasContent = adaptor_->auxVisible() && !adaptor_->auxText().trimmed().isEmpty();
+    const bool shouldShow = adaptor_->enabled() && (lookupHasContent || auxHasContent);
     setVisible(shouldShow);
     if (shouldShow) {
         raise();
@@ -364,10 +456,107 @@ void PanelWindow::repositionToSpot() {
         return;
     }
 
-    const int offsetY = 8;
-    const int targetX = spotX;
-    const int targetY = spotY + spotH + offsetY;
-    move(targetX, targetY);
+    const QPoint rawPoint(spotX, spotY);
+    const QSize rawSize(std::max(spotW, 0), std::max(spotH, 0));
+    const QPointF rawPointF(rawPoint);
+
+    struct Scale {
+        qreal x = 1.0;
+        qreal y = 1.0;
+    };
+
+    auto scaleForScreen = [](QScreen *s) -> Scale {
+        if (!s) {
+            return {};
+        }
+        qreal dpr = s->devicePixelRatio();
+        if (dpr <= 0.0) {
+            dpr = s->logicalDotsPerInchX() / 96.0;
+        }
+        qreal dprY = s->devicePixelRatio();
+        if (dprY <= 0.0) {
+            dprY = s->logicalDotsPerInchY() / 96.0;
+        }
+        dpr = std::max(dpr, 0.01);
+        dprY = std::max(dprY, 0.01);
+        return {dpr, dprY};
+    };
+
+    QScreen *screen = nullptr;
+    Scale scale;
+    QPointF logicalTopLeft;
+
+    const auto screens = QGuiApplication::screens();
+    for (QScreen *candidate : screens) {
+        if (!candidate) {
+            continue;
+        }
+        const Scale candidateScale = scaleForScreen(candidate);
+        const QRect logicalGeometry = candidate->geometry();
+        const QRectF physicalRect(
+            logicalGeometry.left() * candidateScale.x,
+            logicalGeometry.top() * candidateScale.y,
+            logicalGeometry.width() * candidateScale.x,
+            logicalGeometry.height() * candidateScale.y);
+
+        if (!physicalRect.contains(rawPointF)) {
+            continue;
+        }
+
+        const QPointF offsetPhysical = rawPointF - physicalRect.topLeft();
+        const QPointF offsetLogical(offsetPhysical.x() / candidateScale.x,
+                                    offsetPhysical.y() / candidateScale.y);
+
+        screen = candidate;
+        scale = candidateScale;
+        logicalTopLeft = logicalGeometry.topLeft() + offsetLogical;
+        break;
+    }
+
+    if (!screen) {
+        screen = QGuiApplication::screenAt(rawPoint);
+        if (!screen) {
+            screen = QGuiApplication::primaryScreen();
+        }
+        if (!screen) {
+            return;
+        }
+        scale = scaleForScreen(screen);
+        logicalTopLeft = screen->geometry().topLeft()
+            + QPointF(rawPoint.x() / scale.x, rawPoint.y() / scale.y);
+    }
+
+    const QSizeF logicalSpotSize(rawSize.width() / scale.x, rawSize.height() / scale.y);
+
+    const int caretHeight = logicalSpotSize.height() > 0.0 ? qRound(logicalSpotSize.height()) : fontMetrics().height();
+    const int offsetY = 6;
+
+    QSize panelSize = isVisible() ? size() : sizeHint();
+    panelSize = panelSize.expandedTo(minimumSizeHint());
+
+    const QRect available = screen->availableGeometry();
+    QPoint target(qRound(logicalTopLeft.x()), qRound(logicalTopLeft.y()) + caretHeight + offsetY);
+
+    const int maxX = available.x() + available.width() - panelSize.width();
+    const int maxY = available.y() + available.height() - panelSize.height();
+
+    if (available.width() <= panelSize.width()) {
+        target.setX(available.x());
+    } else {
+        target.setX(std::clamp(target.x(), available.x(), maxX));
+    }
+
+    if (available.height() <= panelSize.height()) {
+        target.setY(available.y());
+    } else {
+        target.setY(std::clamp(target.y(), available.y(), maxY));
+    }
+
+    move(target);
+    qDebug() << "[POSITIONING] Screen" << screen->name()
+             << "raw" << rawPoint << "scale" << scale.x << scale.y
+             << "logicalTopLeft" << logicalTopLeft << "caretHeight" << caretHeight
+             << "target" << target << "panelSize" << panelSize;
 }
 
 #include "PanelWindow.moc"
