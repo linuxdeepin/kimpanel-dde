@@ -7,6 +7,7 @@
 #include "KimpanelAdaptor.h"
 #include "KimpanelInputmethodWatcher.h"
 #include "PanelWindow.h"
+#include "SystemTrayController.h"
 
 DWIDGET_USE_NAMESPACE
 
@@ -42,6 +43,8 @@ int main(int argc, char *argv[]) {
     PanelWindow panel(&adaptor);
     panel.hide();
 
+    SystemTrayController trayController(&adaptor, &app);
+
     // qDebug() << "[DBUS] Sending PanelCreated signal on org.kde.impanel interface";
     // bus.send(QDBusMessage::createSignal(PATH, IFACE1, "PanelCreated"));
     // qDebug() << "[DBUS] Sending PanelCreated2 signal on org.kde.impanel2 interface";
@@ -49,4 +52,3 @@ int main(int argc, char *argv[]) {
 
     return app.exec();
 }
-

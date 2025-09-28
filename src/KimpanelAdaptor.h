@@ -1,6 +1,9 @@
 #pragma once
 #include <QObject>
 #include <QStringList>
+#include <QVector>
+
+#include <optional>
 
 struct LookupData {
     QStringList labels;
@@ -34,6 +37,17 @@ class KimpanelAdaptor : public QObject {
     Q_PROPERTY(bool enabled READ enabled NOTIFY enabledChanged)
 
 public:
+    struct Property {
+        QString key;
+        QString label;
+        QString icon;
+        QString tip;
+        QString hint;
+
+        bool operator==(const Property &other) const = default;
+        bool isValid() const { return !key.isEmpty(); }
+    };
+
     explicit KimpanelAdaptor(QObject *parent=nullptr);
 
     // Expose to QML
@@ -55,8 +69,12 @@ public:
     bool lookupVisible() const { return lookupVisible_; }
     bool enabled() const { return enabled_; }
 
+    const QVector<Property> &properties() const { return properties_; }
+    std::optional<Property> propertyForKey(const QString &key) const;
+
     void requestLookupPageUp();
     void requestLookupPageDown();
+    void triggerProperty(const QString &key);
 
 public slots:
     // org.kde.impanel2
@@ -73,14 +91,22 @@ public slots:
     void setLookupVisible(bool v) { if (lookupVisible_ == v) return; lookupVisible_ = v; emit lookupVisibleChanged(); }
     void setEnabled(bool v) { if (enabled_ == v) return; enabled_ = v; emit enabledChanged(); }
 
+    void handleRegisterProperties(const QStringList &props);
+    void handleUpdateProperty(const QString &prop);
+    void handleRemoveProperty(const QString &key);
+
 signals:
     void lookupChanged();
     void spotChanged();
     void auxChanged();
     void lookupVisibleChanged();
     void enabledChanged();
+    void propertiesChanged();
+    void propertyChanged(const QString &key);
 
 private:
+    int propertyIndex(const QString &key) const;
+
     LookupData data_;
     struct { int x=0,y=0,w=0,h=0; } spot_;
     // inputmethod state
@@ -88,4 +114,5 @@ private:
     bool auxVisible_ = false;
     bool lookupVisible_ = false;
     bool enabled_ = false;
+    QVector<Property> properties_;
 };

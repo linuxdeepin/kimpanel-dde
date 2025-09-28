@@ -25,5 +25,6 @@ cmake --build build -j
 5. **Auxiliary Text** – Emit `UpdateAux` + `ShowAux(true)` and ensure the aux banner renders above the candidate row.
 6. **Spot Positioning** – Confirm the window moves near the caret when `SetSpotRect` is invoked.
 7. **Visibility Rules** – Check the panel hides when lookup and aux data are both hidden or when the input method disables itself.
+8. **Dock Tray Icon** – Verify a tray icon appears in the Deepin dock, updates when switching input methods, shows the current label in its tooltip, and triggers the input method menu when activated.
 
 Collect `journalctl --user -u fcitx5` or `busctl monitor org.kde.kimpanel.inputmethod` logs if any DBus transitions misbehave.

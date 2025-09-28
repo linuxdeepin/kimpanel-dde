@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QDBusConnection>
+#include <QStringList>
 
 class KimpanelAdaptor;
 
@@ -16,9 +17,11 @@ private slots:
     void onShowAux(bool visible);
     void onShowLookupTable(bool visible);
     void onEnable(bool enabled);
+    void onRegisterProperties(const QStringList &props);
+    void onUpdateProperty(const QString &prop);
+    void onRemoveProperty(const QString &key);
 
 private:
     void subscribe();
     KimpanelAdaptor* adaptor_ = nullptr;
 };
-

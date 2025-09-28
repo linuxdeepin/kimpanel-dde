@@ -42,9 +42,15 @@
 
 ## Implementation Status: org.kde.kimpanel.inputmethod Signals ✅ COMPLETED
 
-- **KimpanelInputmethodWatcher** subscribes to `UpdateAux`, `ShowAux`, `ShowLookupTable`, `Enable` signals and updates `KimpanelAdaptor`.
-- **KimpanelAdaptor** exposes properties (`auxText`, `auxVisible`, `lookupVisible`, `enabled`) with change detection and new DBus navigation helpers.
+- **KimpanelInputmethodWatcher** subscribes to `UpdateAux`, `ShowAux`, `ShowLookupTable`, `Enable`, `RegisterProperties`, `UpdateProperty`, and `RemoveProperty` signals and updates `KimpanelAdaptor`.
+- **KimpanelAdaptor** exposes properties (`auxText`, `auxVisible`, `lookupVisible`, `enabled`) with change detection, caches status properties from Fcitx5, and provides DBus navigation helpers.
 - Environment toggle `KIMPANEL_DISABLE_INPUTMETHOD` still disables signal subscription for debugging.
+
+## Implementation Status: Deepin Status Notifier Icon ✅ COMPLETED
+
+- **SystemTrayController** (`src/SystemTrayController.{h,cpp}`) owns a `QSystemTrayIcon`, keeps icon/tooltips in sync with the `/Fcitx/im` property, and exposes a quick switch entry plus quit action in the context menu.
+- **KimpanelAdaptor** emits property change notifications and forwards `TriggerProperty` to `org.kde.impanel` so tray interactions reach Fcitx5.
+- Runtime guard `KIMPANEL_DISABLE_SNI` disables the tray path for debugging or environments without SNI; `QSystemTrayIcon::isSystemTrayAvailable()` is checked at startup.
 
 ## Implementation Status: DTK/X11 Panel Port ✅ COMPLETED
 
@@ -63,4 +69,4 @@
 
 ## Manual Testing Notes
 
-See `dtk.md` for a detailed DDE/X11 checklist covering panel boot, candidate paging, aux text display, and DBus verification.
+See `dtk.md` for a detailed DDE/X11 checklist covering panel boot, candidate paging, aux text display, dock tray verification, and DBus validation.

@@ -32,6 +32,14 @@ void KimpanelInputmethodWatcher::subscribe() {
     bus.connect(QString(), QString(), INPUTMETHOD_IFACE, QStringLiteral("UpdateAux"),
                 this, SLOT(onUpdateAux(QString, QString)));
 
+    // Property registration for status area / tray integration
+    bus.connect(QString(), QString(), INPUTMETHOD_IFACE, QStringLiteral("RegisterProperties"),
+                this, SLOT(onRegisterProperties(QStringList)));
+    bus.connect(QString(), QString(), INPUTMETHOD_IFACE, QStringLiteral("UpdateProperty"),
+                this, SLOT(onUpdateProperty(QString)));
+    bus.connect(QString(), QString(), INPUTMETHOD_IFACE, QStringLiteral("RemoveProperty"),
+                this, SLOT(onRemoveProperty(QString)));
+
     qDebug() << "[DBUS][inputmethod] Subscribed to" << INPUTMETHOD_IFACE << "signals";
 }
 
@@ -56,3 +64,23 @@ void KimpanelInputmethodWatcher::onEnable(bool enabled) {
     adaptor_->setEnabled(enabled);
 }
 
+void KimpanelInputmethodWatcher::onRegisterProperties(const QStringList &props) {
+    if (!adaptor_) {
+        return;
+    }
+    adaptor_->handleRegisterProperties(props);
+}
+
+void KimpanelInputmethodWatcher::onUpdateProperty(const QString &prop) {
+    if (!adaptor_) {
+        return;
+    }
+    adaptor_->handleUpdateProperty(prop);
+}
+
+void KimpanelInputmethodWatcher::onRemoveProperty(const QString &key) {
+    if (!adaptor_) {
+        return;
+    }
+    adaptor_->handleRemoveProperty(key);
+}

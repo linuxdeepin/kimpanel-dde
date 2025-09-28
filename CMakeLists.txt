@@ -21,6 +21,8 @@ qt_add_executable(kimpanel-lite
   src/KimpanelAdaptor.h
   src/KimpanelInputmethodWatcher.cpp
   src/KimpanelInputmethodWatcher.h
+  src/SystemTrayController.cpp
+  src/SystemTrayController.h
   src/PanelWindow.cpp
   src/PanelWindow.h
 )
