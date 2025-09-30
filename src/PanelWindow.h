@@ -1,7 +1,6 @@
 #pragma once
 
 #include <DWidget>
-#include <DPushButton>
 
 #include <QVector>
 
@@ -17,6 +16,7 @@ class DFrame;
 class QHBoxLayout;
 class QVBoxLayout;
 class QWidget;
+class QEvent;
 
 class PanelWindow : public Dtk::Widget::DWidget {
     Q_OBJECT
@@ -37,20 +37,19 @@ private:
     void updateCandidates();
     void updateAuxText();
     void updateVisibility();
-    void updateNavigationIndicators();
     void ensureChipCount(int count);
     void repositionToSpot();
+    void applyStyleSheet();
+
+    void changeEvent(QEvent *event) override;
 
     KimpanelAdaptor *adaptor_ = nullptr;
 
     Dtk::Widget::DFrame *panelFrame_ = nullptr;
     Dtk::Widget::DFrame *auxChip_ = nullptr;
     Dtk::Widget::DLabel *auxLabel_ = nullptr;
-    QWidget *rowWrapper_ = nullptr;
     QWidget *candidateRowHost_ = nullptr;
     QHBoxLayout *candidateRowLayout_ = nullptr;
-    Dtk::Widget::DPushButton *prevButton_ = nullptr;
-    Dtk::Widget::DPushButton *nextButton_ = nullptr;
 
     QVector<QWidget*> candidateChips_;
 };

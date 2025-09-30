@@ -4,12 +4,12 @@
 
 #include <DFrame>
 #include <DLabel>
-#include <DPushButton>
 #include <DPaletteHelper>
 #include <DPalette>
 
 #include <QColor>
 #include <QDebug>
+#include <QEvent>
 #include <QFont>
 #include <QGuiApplication>
 #include <QHBoxLayout>
@@ -23,6 +23,7 @@
 #include <QSizePolicy>
 #include <QStyle>
 #include <QVBoxLayout>
+#include <QWidget>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -30,25 +31,25 @@
 DWIDGET_USE_NAMESPACE
 
 namespace {
-class CandidateChip : public DFrame {
+class CandidateChip : public QWidget {
     Q_OBJECT
 public:
     explicit CandidateChip(QWidget *parent = nullptr)
-        : DFrame(parent) {
+        : QWidget(parent) {
         setObjectName("CandidateChip");
-        setAutoFillBackground(true);
-        setFrameShape(QFrame::NoFrame);
         setAttribute(Qt::WA_StyledBackground, true);
+        setAutoFillBackground(false);
 
         auto *layout = new QHBoxLayout(this);
-        layout->setContentsMargins(10, 6, 10, 6);
-        layout->setSpacing(6);
+        layout->setContentsMargins(2, 2, 2, 2);
+        layout->setSpacing(4);
 
         label_ = new DLabel(this);
         label_->setObjectName("candidateLabel");
         label_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         label_->setVisible(false);
         label_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+        label_->setWordWrap(false);
         layout->addWidget(label_);
 
         text_ = new DLabel(this);
@@ -58,6 +59,7 @@ public:
         text_->setFont(textFont);
         text_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         text_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+        text_->setWordWrap(false);
         layout->addWidget(text_);
 
         comment_ = new DLabel(this);
@@ -65,6 +67,7 @@ public:
         comment_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         comment_->setVisible(false);
         comment_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+        comment_->setWordWrap(false);
         layout->addWidget(comment_);
 
         refreshPalette();
@@ -87,6 +90,7 @@ public:
         refreshPalette();
         style()->unpolish(this);
         style()->polish(this);
+        update();
     }
 
 private:
@@ -94,29 +98,52 @@ private:
         auto helper = DPaletteHelper::instance();
         DPalette palette = helper->palette(this);
 
-        QColor background;
-        QColor textColor;
-        if (selected_) {
-            background = palette.color(DPalette::Highlight);
-            textColor = palette.color(DPalette::HighlightedText);
-        } else {
-            background = palette.color(DPalette::Button);
-            textColor = palette.color(DPalette::Text);
+        QColor primaryText = palette.color(DPalette::Text);
+        if (!primaryText.isValid()) {
+            primaryText = palette.color(DPalette::WindowText);
+        }
+        if (!primaryText.isValid()) {
+            primaryText = palette.color(DPalette::BrightText);
+        }
+        if (!primaryText.isValid()) {
+            primaryText = QColor(Qt::black);
         }
 
-        auto framePalette = this->palette();
-        framePalette.setColor(QPalette::Window, background);
-        framePalette.setColor(QPalette::WindowText, textColor);
-        setPalette(framePalette);
+        QColor secondaryText = palette.color(DPalette::PlaceholderText);
+        if (!secondaryText.isValid()) {
+            secondaryText = primaryText.darker(135);
+        }
 
-        auto applyTo = [textColor](DLabel *label) {
+        QColor highlight = palette.color(DPalette::Highlight);
+        if (!highlight.isValid()) {
+            highlight = primaryText;
+        }
+
+        auto setLabelColor = [](DLabel *label, const QColor &color) {
+            if (!label) {
+                return;
+            }
             auto pal = label->palette();
-            pal.setColor(QPalette::WindowText, textColor);
+            pal.setColor(QPalette::WindowText, color);
+            pal.setColor(QPalette::Text, color);
             label->setPalette(pal);
         };
-        applyTo(label_);
-        applyTo(text_);
-        applyTo(comment_);
+
+        const QColor labelColor = selected_ ? highlight : primaryText;
+        setLabelColor(label_, labelColor);
+        setLabelColor(text_, selected_ ? highlight : primaryText);
+        setLabelColor(comment_, secondaryText);
+    }
+
+    void changeEvent(QEvent *event) override {
+        QWidget::changeEvent(event);
+        if (!event) {
+            return;
+        }
+        const QEvent::Type type = event->type();
+        if (type == QEvent::PaletteChange || type == QEvent::ApplicationPaletteChange) {
+            refreshPalette();
+        }
     }
 
     DLabel *label_ = nullptr;
@@ -142,7 +169,7 @@ PanelWindow::PanelWindow(KimpanelAdaptor *adaptor, QWidget *parent)
 void PanelWindow::setupUi() {
     auto *outerLayout = new QVBoxLayout(this);
     outerLayout->setContentsMargins(0, 0, 0, 0);
-    outerLayout->setSpacing(6);
+    outerLayout->setSpacing(4);
 
     auxChip_ = new DFrame(this);
     auxChip_->setObjectName("auxChip");
@@ -152,7 +179,7 @@ void PanelWindow::setupUi() {
     auxChip_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
 
     auto *auxLayout = new QHBoxLayout(auxChip_);
-    auxLayout->setContentsMargins(8, 4, 8, 4);
+    auxLayout->setContentsMargins(6, 2, 6, 2);
     auxLayout->setSpacing(4);
 
     auxLabel_ = new DLabel(auxChip_);
@@ -173,106 +200,22 @@ void PanelWindow::setupUi() {
     outerLayout->addWidget(panelFrame_, 0, Qt::AlignLeft);
 
     auto *frameLayout = new QVBoxLayout(panelFrame_);
-    frameLayout->setContentsMargins(12, 8, 12, 10);
-    frameLayout->setSpacing(8);
+    frameLayout->setContentsMargins(10, 6, 10, 8);
+    frameLayout->setSpacing(4);
 
-    rowWrapper_ = new QWidget(panelFrame_);
-    auto *rowLayout = new QHBoxLayout(rowWrapper_);
-    rowLayout->setContentsMargins(0, 0, 0, 0);
-    rowLayout->setSpacing(8);
-
-    prevButton_ = new DPushButton(rowWrapper_);
-    prevButton_->setObjectName("navPrev");
-    prevButton_->setFlat(true);
-    prevButton_->setText(QStringLiteral("◀"));
-    prevButton_->setFixedSize(QSize(28, 28));
-    prevButton_->setFocusPolicy(Qt::NoFocus);
-
-    candidateRowHost_ = new QWidget(rowWrapper_);
+    candidateRowHost_ = new QWidget(panelFrame_);
     candidateRowHost_->setObjectName("candidateRow");
     candidateRowHost_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
 
     candidateRowLayout_ = new QHBoxLayout(candidateRowHost_);
     candidateRowLayout_->setContentsMargins(0, 0, 0, 0);
-    candidateRowLayout_->setSpacing(8);
+    candidateRowLayout_->setSpacing(10);
 
-    nextButton_ = new DPushButton(rowWrapper_);
-    nextButton_->setObjectName("navNext");
-    nextButton_->setFlat(true);
-    nextButton_->setText(QStringLiteral("▶"));
-    nextButton_->setFixedSize(QSize(28, 28));
-    nextButton_->setFocusPolicy(Qt::NoFocus);
-
-    rowLayout->addWidget(prevButton_);
-    rowLayout->addWidget(candidateRowHost_, 1);
-    rowLayout->addWidget(nextButton_);
-
-    frameLayout->addWidget(rowWrapper_);
+    frameLayout->addWidget(candidateRowHost_);
 
     panelFrame_->setVisible(false);
 
-    setStyleSheet(QStringLiteral(R"( 
-#panelFrame {
-    border-radius: 10px;
-    border: 1px solid palette(midlight);
-    background: palette(window);
-}
-
-#auxChip {
-    border-radius: 8px;
-    border: 1px solid palette(midlight);
-    background: palette(alternateBase);
-}
-
-#auxLabel {
-    color: palette(text);
-    font-weight: 500;
-}
-
-#navPrev, #navNext {
-    border: none;
-    background: transparent;
-    color: palette(mid);
-}
-
-#navPrev:disabled, #navNext:disabled {
-    color: palette(shadow);
-}
-
-CandidateChip {
-    border: 1px solid palette(midlight);
-    border-radius: 8px;
-    background: palette(button);
-}
-
-CandidateChip[selected="true"] {
-    border-color: palette(highlight);
-    background: palette(highlight);
-}
-
-CandidateChip[selected="true"] QLabel {
-    color: palette(highlightedText);
-}
-
-#candidateComment {
-    color: palette(mid);
-}
-
-CandidateChip[selected="true"] #candidateComment {
-    color: palette(highlightedText);
-}
-)"));
-
-    connect(prevButton_, &DPushButton::clicked, this, [this]() {
-        if (adaptor_) {
-            adaptor_->requestLookupPageUp();
-        }
-    });
-    connect(nextButton_, &DPushButton::clicked, this, [this]() {
-        if (adaptor_) {
-            adaptor_->requestLookupPageDown();
-        }
-    });
+    applyStyleSheet();
 }
 
 void PanelWindow::connectAdaptorSignals() {
@@ -287,17 +230,31 @@ void PanelWindow::connectAdaptorSignals() {
     connect(adaptor_, &KimpanelAdaptor::spotChanged, this, &PanelWindow::handleSpotChanged);
 }
 
+void PanelWindow::changeEvent(QEvent *event) {
+    DWidget::changeEvent(event);
+    if (!event) {
+        return;
+    }
+    const QEvent::Type type = event->type();
+    if (type == QEvent::PaletteChange || type == QEvent::ApplicationPaletteChange) {
+        applyStyleSheet();
+        for (QWidget *chipWidget : candidateChips_) {
+            if (auto *chip = qobject_cast<CandidateChip*>(chipWidget)) {
+                chip->update();
+            }
+        }
+    }
+}
+
 void PanelWindow::updateFromAdaptor() {
     updateCandidates();
     updateAuxText();
-    updateNavigationIndicators();
     updateVisibility();
     repositionToSpot();
 }
 
 void PanelWindow::handleLookupChanged() {
     updateCandidates();
-    updateNavigationIndicators();
     updateVisibility();
 }
 
@@ -324,17 +281,8 @@ void PanelWindow::updateCandidates() {
         if (panelFrame_) {
             panelFrame_->setVisible(false);
         }
-        if (rowWrapper_) {
-            rowWrapper_->setVisible(false);
-        }
         if (candidateRowHost_) {
             candidateRowHost_->setVisible(false);
-        }
-        if (prevButton_) {
-            prevButton_->setVisible(false);
-        }
-        if (nextButton_) {
-            nextButton_->setVisible(false);
         }
         return;
     }
@@ -363,17 +311,8 @@ void PanelWindow::updateCandidates() {
     if (panelFrame_) {
         panelFrame_->setVisible(shouldShowLookup);
     }
-    if (rowWrapper_) {
-        rowWrapper_->setVisible(shouldShowLookup);
-    }
     if (candidateRowHost_) {
         candidateRowHost_->setVisible(shouldShowLookup);
-    }
-    if (prevButton_) {
-        prevButton_->setVisible(shouldShowLookup);
-    }
-    if (nextButton_) {
-        nextButton_->setVisible(shouldShowLookup);
     }
 
     adjustSize();
@@ -412,15 +351,6 @@ void PanelWindow::updateVisibility() {
         raise();
         adjustSize();
     }
-}
-
-void PanelWindow::updateNavigationIndicators() {
-    if (!adaptor_) {
-        return;
-    }
-
-    prevButton_->setEnabled(adaptor_->hasPrev());
-    nextButton_->setEnabled(adaptor_->hasNext());
 }
 
 void PanelWindow::ensureChipCount(int count) {
@@ -557,6 +487,51 @@ void PanelWindow::repositionToSpot() {
              << "raw" << rawPoint << "scale" << scale.x << scale.y
              << "logicalTopLeft" << logicalTopLeft << "caretHeight" << caretHeight
              << "target" << target << "panelSize" << panelSize;
+}
+
+void PanelWindow::applyStyleSheet() {
+    static const QString sheet = QStringLiteral(R"(
+#panelFrame {
+    border-radius: 10px;
+    border: 1px solid palette(midlight);
+    background: palette(window);
+}
+
+#auxChip {
+    border-radius: 6px;
+    border: 1px solid palette(midlight);
+    background: palette(window);
+}
+
+#auxLabel {
+    color: palette(text);
+    font-weight: 500;
+}
+
+CandidateChip {
+    background: transparent;
+}
+
+CandidateChip[selected="true"] {
+    background: transparent;
+}
+
+#candidateComment {
+    color: palette(mid);
+}
+)");
+
+    const QString current = styleSheet();
+    if (current == sheet) {
+        DWidget::setStyleSheet(QString());
+    }
+    DWidget::setStyleSheet(sheet);
+    if (panelFrame_) {
+        panelFrame_->update();
+    }
+    if (auxChip_) {
+        auxChip_->update();
+    }
 }
 
 #include "PanelWindow.moc"

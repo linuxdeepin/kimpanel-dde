@@ -54,7 +54,7 @@
 
 ## Implementation Status: DTK/X11 Panel Port ✅ COMPLETED
 
-- **PanelWindow** (`src/PanelWindow.{h,cpp}`) renders auxiliary text and lookup candidates using DTK widgets, manages horizontal chip layout, and exposes navigation buttons tied to `LookupTablePageUp/Down` DBus calls.
+- **PanelWindow** (`src/PanelWindow.{h,cpp}`) renders auxiliary text and lookup candidates using DTK widgets, uses a compact chip row without navigation buttons (paging stays via keyboard), and tracks Deepin palette changes live so background/text colors follow the active light or dark theme.
 - **Application Bootstrap** (`src/main.cpp`) now instantiates `DApplication`, drops LayerShell, and relies on QWidget positioning for caret tracking.
 - **Build System** (`CMakeLists.txt`) links against Qt Widgets and Dtk6 components; QML module and LayerShellQt dependencies removed.
 - **Documentation** (`dtk.md`, `CLAUDE.md`) updated with DTK dependencies and DDE/X11 manual test steps.
