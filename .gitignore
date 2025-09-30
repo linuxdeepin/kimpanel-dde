@@ -1,0 +1,125 @@
+# Build directories
+build*/
+*/build/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+compile_commands.json
+
+# Qt/QML generated files
+*_autogen/
+*.qmltyperegistrations.cpp
+*.qmlc
+*.jsc
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qm
+*.pdb
+
+# Qt Creator
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+.qmake.stash
+
+# Executables
+*.exe
+*.out
+*.app
+kimpanel-lite
+
+# Object files
+*.o
+*.obj
+*.ko
+*.elf
+
+# Libraries
+*.a
+*.la
+*.lib
+*.so
+*.so.*
+*.dylib
+
+# Debug files
+*.debug
+*.dSYM/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.orig
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+.#*
+#*#
+
+# Log files
+*.log
+
+# Package files
+*.rpm
+*.deb
+*.tar.gz
+*.zip
+
+# Meta types and generated files
+meta_types/
+qmltypes/
+*.qmltypes
+
+# Qt resource files (generated)
+*.qrc.depends
+*.qrc
+
+# System files
+.directory
+*.autosave
+
+# Backup files
+*.bak
+*.gho
+*.ori
+*.orig
+*.tmp
+
+# Hidden files and folders (starting with .)
+.*
+# But allow specific hidden files that should be tracked
+!.gitignore
+!.gitattributes
+!.github/
+!.clang-format
+!.clang-tidy
+
+# Generated documentation
+doc/html/
+doc/latex/
+docs/_build/
+
+# Coverage reports
+*.gcov
+*.gcda
+*.gcno
+coverage.info
