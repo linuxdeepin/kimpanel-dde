@@ -123,7 +123,3 @@ docs/_build/
 *.gcda
 *.gcno
 coverage.info
-
-# Other
-fcitx5_side_implementation/
-kde_example/
