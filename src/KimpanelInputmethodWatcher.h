@@ -20,6 +20,7 @@ private slots:
     void onRegisterProperties(const QStringList &props);
     void onUpdateProperty(const QString &prop);
     void onRemoveProperty(const QString &key);
+    void onExecMenu(const QStringList &entries);
 
 private:
     void subscribe();

@@ -39,6 +39,8 @@ void KimpanelInputmethodWatcher::subscribe() {
                 this, SLOT(onUpdateProperty(QString)));
     bus.connect(QString(), QString(), INPUTMETHOD_IFACE, QStringLiteral("RemoveProperty"),
                 this, SLOT(onRemoveProperty(QString)));
+    bus.connect(QString(), QString(), INPUTMETHOD_IFACE, QStringLiteral("ExecMenu"),
+                this, SLOT(onExecMenu(QStringList)));
 
     qDebug() << "[DBUS][inputmethod] Subscribed to" << INPUTMETHOD_IFACE << "signals";
 }
@@ -83,4 +85,11 @@ void KimpanelInputmethodWatcher::onRemoveProperty(const QString &key) {
         return;
     }
     adaptor_->handleRemoveProperty(key);
+}
+
+void KimpanelInputmethodWatcher::onExecMenu(const QStringList &entries) {
+    if (!adaptor_) {
+        return;
+    }
+    adaptor_->handleExecMenu(entries);
 }

@@ -75,6 +75,7 @@ public:
     void requestLookupPageUp();
     void requestLookupPageDown();
     void triggerProperty(const QString &key);
+    void toggleInputMethod();
 
 public slots:
     // org.kde.impanel2
@@ -94,6 +95,7 @@ public slots:
     void handleRegisterProperties(const QStringList &props);
     void handleUpdateProperty(const QString &prop);
     void handleRemoveProperty(const QString &key);
+    void handleExecMenu(const QStringList &entries);
 
 signals:
     void lookupChanged();
@@ -103,6 +105,7 @@ signals:
     void enabledChanged();
     void propertiesChanged();
     void propertyChanged(const QString &key);
+    void execMenuReceived(const QVector<Property> &entries);
 
 private:
     int propertyIndex(const QString &key) const;

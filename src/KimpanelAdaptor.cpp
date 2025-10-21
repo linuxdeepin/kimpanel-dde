@@ -31,6 +31,18 @@ KimpanelAdaptor::Property parsePropertyString(const QString &raw) {
     }
     return prop;
 }
+
+QVector<KimpanelAdaptor::Property> parsePropertyList(const QStringList &list) {
+    QVector<KimpanelAdaptor::Property> parsed;
+    parsed.reserve(list.size());
+    for (const QString &raw : list) {
+        auto prop = parsePropertyString(raw);
+        if (prop.isValid()) {
+            parsed.push_back(std::move(prop));
+        }
+    }
+    return parsed;
+}
 }
 
 KimpanelAdaptor::KimpanelAdaptor(QObject *parent) : QObject(parent) {}
@@ -58,17 +70,17 @@ void KimpanelAdaptor::SetLookupTable(const QStringList &labels,
     emit lookupChanged();
 }
 
-void KimpanelAdaptor::requestLookupPageUp() {
-    if (!QDBusConnection::sessionBus().isConnected()) {
-        qWarning() << "[DBUS][panel] No session bus available for LookupTablePageUp";
-        return;
-    }
-    auto msg = QDBusMessage::createMethodCall(INPUT_METHOD_SERVICE,
-                                              INPUT_METHOD_PATH,
-                                              INPUT_METHOD_INTERFACE,
-                                              QStringLiteral("LookupTablePageUp"));
-    QDBusConnection::sessionBus().asyncCall(msg);
-}
+// void KimpanelAdaptor::requestLookupPageUp() {
+//     if (!QDBusConnection::sessionBus().isConnected()) {
+//         qWarning() << "[DBUS][panel] No session bus available for LookupTablePageUp";
+//         return;
+//     }
+//     auto msg = QDBusMessage::createMethodCall(INPUT_METHOD_SERVICE,
+//                                               INPUT_METHOD_PATH,
+//                                               INPUT_METHOD_INTERFACE,
+//                                               QStringLiteral("LookupTablePageUp"));
+//     QDBusConnection::sessionBus().asyncCall(msg);
+// }
 
 void KimpanelAdaptor::triggerProperty(const QString &key) {
     if (key.isEmpty()) {
@@ -78,12 +90,24 @@ void KimpanelAdaptor::triggerProperty(const QString &key) {
         qWarning() << "[DBUS][panel] No session bus available for TriggerProperty" << key;
         return;
     }
-    auto msg = QDBusMessage::createSignal(QString::fromLatin1(PANEL_PATH),
-                                          QString::fromLatin1(PANEL_INTERFACE),
+    auto msg = QDBusMessage::createSignal(PANEL_PATH,
+                                          PANEL_INTERFACE,
                                           QStringLiteral("TriggerProperty"));
     msg << key;
     QDBusConnection::sessionBus().send(msg);
 }
+
+// void KimpanelAdaptor::toggleInputMethod() {
+//     if (!QDBusConnection::sessionBus().isConnected()) {
+//         qWarning() << "[DBUS][panel] No session bus available for Toggle";
+//         return;
+//     }
+//     auto msg = QDBusMessage::createMethodCall(INPUT_METHOD_SERVICE,
+//                                               INPUT_METHOD_PATH,
+//                                               INPUT_METHOD_INTERFACE,
+//                                               QStringLiteral("Toggle"));
+//     QDBusConnection::sessionBus().asyncCall(msg);
+// }
 
 std::optional<KimpanelAdaptor::Property> KimpanelAdaptor::propertyForKey(const QString &key) const {
     const int idx = propertyIndex(key);
@@ -94,14 +118,7 @@ std::optional<KimpanelAdaptor::Property> KimpanelAdaptor::propertyForKey(const Q
 }
 
 void KimpanelAdaptor::handleRegisterProperties(const QStringList &props) {
-    QVector<Property> parsed;
-    parsed.reserve(props.size());
-    for (const QString &raw : props) {
-        auto prop = parsePropertyString(raw);
-        if (prop.isValid()) {
-            parsed.push_back(std::move(prop));
-        }
-    }
+    QVector<Property> parsed = parsePropertyList(props);
 
     const bool changed = (parsed != properties_);
     properties_ = std::move(parsed);
@@ -141,6 +158,11 @@ void KimpanelAdaptor::handleRemoveProperty(const QString &key) {
     emit propertyChanged(key);
 }
 
+void KimpanelAdaptor::handleExecMenu(const QStringList &entries) {
+    const QVector<Property> parsed = parsePropertyList(entries);
+    emit execMenuReceived(parsed);
+}
+
 int KimpanelAdaptor::propertyIndex(const QString &key) const {
     for (int i = 0; i < properties_.size(); ++i) {
         if (properties_.at(i).key == key) {
@@ -150,14 +172,14 @@ int KimpanelAdaptor::propertyIndex(const QString &key) const {
     return -1;
 }
 
-void KimpanelAdaptor::requestLookupPageDown() {
-    if (!QDBusConnection::sessionBus().isConnected()) {
-        qWarning() << "[DBUS][panel] No session bus available for LookupTablePageDown";
-        return;
-    }
-    auto msg = QDBusMessage::createMethodCall(INPUT_METHOD_SERVICE,
-                                              INPUT_METHOD_PATH,
-                                              INPUT_METHOD_INTERFACE,
-                                              QStringLiteral("LookupTablePageDown"));
-    QDBusConnection::sessionBus().asyncCall(msg);
-}
+// void KimpanelAdaptor::requestLookupPageDown() {
+//     if (!QDBusConnection::sessionBus().isConnected()) {
+//         qWarning() << "[DBUS][panel] No session bus available for LookupTablePageDown";
+//         return;
+//     }
+//     auto msg = QDBusMessage::createMethodCall(INPUT_METHOD_SERVICE,
+//                                               INPUT_METHOD_PATH,
+//                                               INPUT_METHOD_INTERFACE,
+//                                               QStringLiteral("LookupTablePageDown"));
+//     QDBusConnection::sessionBus().asyncCall(msg);
+// }

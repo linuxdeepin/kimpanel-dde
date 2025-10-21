@@ -49,6 +49,7 @@
 ## Implementation Status: Deepin Status Notifier Icon ✅ COMPLETED
 
 - **SystemTrayController** (`src/SystemTrayController.{h,cpp}`) owns a `QSystemTrayIcon`, keeps icon/tooltips in sync with the `/Fcitx/im` property, and exposes a quick switch entry plus quit action in the context menu.
+- Left-clicking the tray icon now auto-cycles to the next input method by reusing the `ExecMenu` payload, while the context action still surfaces the full chooser when manual selection is desired.
 - **KimpanelAdaptor** emits property change notifications and forwards `TriggerProperty` to `org.kde.impanel` so tray interactions reach Fcitx5.
 - Runtime guard `KIMPANEL_DISABLE_SNI` disables the tray path for debugging or environments without SNI; `QSystemTrayIcon::isSystemTrayAvailable()` is checked at startup.
 
