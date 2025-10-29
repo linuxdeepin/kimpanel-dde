@@ -72,10 +72,7 @@ public:
     const QVector<Property> &properties() const { return properties_; }
     std::optional<Property> propertyForKey(const QString &key) const;
 
-    void requestLookupPageUp();
-    void requestLookupPageDown();
     void triggerProperty(const QString &key);
-    void toggleInputMethod();
 
 public slots:
     // org.kde.impanel2

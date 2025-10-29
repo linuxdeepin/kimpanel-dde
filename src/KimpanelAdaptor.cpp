@@ -70,18 +70,6 @@ void KimpanelAdaptor::SetLookupTable(const QStringList &labels,
     emit lookupChanged();
 }
 
-// void KimpanelAdaptor::requestLookupPageUp() {
-//     if (!QDBusConnection::sessionBus().isConnected()) {
-//         qWarning() << "[DBUS][panel] No session bus available for LookupTablePageUp";
-//         return;
-//     }
-//     auto msg = QDBusMessage::createMethodCall(INPUT_METHOD_SERVICE,
-//                                               INPUT_METHOD_PATH,
-//                                               INPUT_METHOD_INTERFACE,
-//                                               QStringLiteral("LookupTablePageUp"));
-//     QDBusConnection::sessionBus().asyncCall(msg);
-// }
-
 void KimpanelAdaptor::triggerProperty(const QString &key) {
     if (key.isEmpty()) {
         return;
@@ -96,18 +84,6 @@ void KimpanelAdaptor::triggerProperty(const QString &key) {
     msg << key;
     QDBusConnection::sessionBus().send(msg);
 }
-
-// void KimpanelAdaptor::toggleInputMethod() {
-//     if (!QDBusConnection::sessionBus().isConnected()) {
-//         qWarning() << "[DBUS][panel] No session bus available for Toggle";
-//         return;
-//     }
-//     auto msg = QDBusMessage::createMethodCall(INPUT_METHOD_SERVICE,
-//                                               INPUT_METHOD_PATH,
-//                                               INPUT_METHOD_INTERFACE,
-//                                               QStringLiteral("Toggle"));
-//     QDBusConnection::sessionBus().asyncCall(msg);
-// }
 
 std::optional<KimpanelAdaptor::Property> KimpanelAdaptor::propertyForKey(const QString &key) const {
     const int idx = propertyIndex(key);
@@ -171,15 +147,3 @@ int KimpanelAdaptor::propertyIndex(const QString &key) const {
     }
     return -1;
 }
-
-// void KimpanelAdaptor::requestLookupPageDown() {
-//     if (!QDBusConnection::sessionBus().isConnected()) {
-//         qWarning() << "[DBUS][panel] No session bus available for LookupTablePageDown";
-//         return;
-//     }
-//     auto msg = QDBusMessage::createMethodCall(INPUT_METHOD_SERVICE,
-//                                               INPUT_METHOD_PATH,
-//                                               INPUT_METHOD_INTERFACE,
-//                                               QStringLiteral("LookupTablePageDown"));
-//     QDBusConnection::sessionBus().asyncCall(msg);
-// }

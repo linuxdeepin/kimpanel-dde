@@ -45,10 +45,6 @@ int main(int argc, char *argv[]) {
 
     SystemTrayController trayController(&adaptor, &app);
 
-    // qDebug() << "[DBUS] Sending PanelCreated signal on org.kde.impanel interface";
-    // bus.send(QDBusMessage::createSignal(PATH, IFACE1, "PanelCreated"));
-    // qDebug() << "[DBUS] Sending PanelCreated2 signal on org.kde.impanel2 interface";
-    // bus.send(QDBusMessage::createSignal(PATH, IFACE2, "PanelCreated2"));
 
     return app.exec();
 }
